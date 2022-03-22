@@ -2,6 +2,7 @@ nogit
 nogit/
 nogit/*
 _test.py
+_private.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,11 +5,9 @@ from json.decoder import JSONDecodeError
 from typing import Union, Optional, Dict, Any
 from urllib.parse import urljoin
 
-from spec_utils._base import OAuthClient
-from spec_utils._schemas import JWT
-
-from .config import settings
-from .utils import Decorators
+from config import settings
+from http_handler import OAuthClient
+from utils import Decorators, JWT
 
 
 class Client(OAuthClient):
@@ -109,55 +107,6 @@ class Client(OAuthClient):
     def is_connected(self):
         """ Informs if client has headers and access_token. """
         return bool("authorization" in self.headers and self.token != None)
-
-
-    def post(
-        self,
-        url: Optional[Union[str, Path]] = None,
-        path: Optional[str] = None,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        get_headers: Optional[bool] = None,
-        **kwargs
-    ):
-        # prepare url
-        url = url or urljoin(self.client_url.geturl(), path)
-
-        # consulting visma
-        response = self.session.post(
-            url=url,
-            params=params,
-            data=data,
-            json=json,
-            **kwargs
-        )
-
-        if get_headers:
-            return response.headers
-
-        # if session was closed, reconect client and try again
-        if response.status_code == 401 and self.session_expired:
-            self.relogin()
-            return self.post(
-                path=path,
-                params=params,
-                data=data,
-                json=json,
-                **kwargs
-            )
-
-        # raise if was an error
-        if response.status_code not in range(200, 300):
-            raise ConnectionError({
-                "status": response.status_code,
-                "detail": response.text
-            })
-
-        try:
-            return response.json()
-        except JSONDecodeError:
-            return response.text
 
     
     def login(self) -> None: 
